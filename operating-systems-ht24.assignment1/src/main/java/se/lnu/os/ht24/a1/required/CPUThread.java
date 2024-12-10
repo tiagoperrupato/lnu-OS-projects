@@ -20,7 +20,7 @@ public class CPUThread extends Thread {
             synchronized (processQueue) {
                 while (processQueue.isEmpty()) {
                     try {
-                        wait(); // Wait for new processes
+                        processQueue.wait(); // Wait for new processes
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -43,7 +43,7 @@ public class CPUThread extends Thread {
                 
                 synchronized(reporterQueue) {
                     reporterQueue.add(process);
-                    notify(); // Notify the CPU thread that a new process is available
+                    reporterQueue.notify(); // Notify the CPU thread that a new process is available
                 }
             }
         }

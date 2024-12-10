@@ -22,7 +22,7 @@ public class ReporterManager extends Thread {
             synchronized (reporterQueue) {
                 while (reporterQueue.isEmpty()) {
                     try {
-                        wait(); // Wait for new reports
+                        reporterQueue.wait(); // Wait for new reports
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -33,7 +33,7 @@ public class ReporterManager extends Thread {
             if (process != null) {
                 synchronized (reporter) {
                     reporter.addProcessReport(process);
-                    notify();
+                    reporter.notify();
                 }
             }
         }

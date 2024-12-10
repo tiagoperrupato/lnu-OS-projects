@@ -68,13 +68,14 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 		ProcessInformation process = ProcessInformation.createProcessInformation();
 		process.setProcessName(processName);
 		process.setCpuBurstDuration(cpuBurstDuration);
+		process.setArrivalTime(System.currentTimeMillis());
 		addProcessToQueue(process);
 	}
 
 	private void addProcessToQueue(ProcessInformation process) {
 		synchronized(processQueue) {
 			processQueue.add(process);
-        	notify(); // Notify the CPU thread that a new process is available
+        	processQueue.notify(); // Notify the CPU thread that a new process is available
 		}
 	}
 

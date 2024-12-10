@@ -1,7 +1,6 @@
 package se.lnu.os.ht24.a1.required;
 
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.List;
 
 import se.lnu.os.ht24.a1.provided.Scheduler;
@@ -14,6 +13,7 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 	private long startingTime;
 
 	private ArrayDeque<ProcessInformation> processQueue;
+	private ArrayDeque<ProcessInformation> reporterQueue;
 	private Thread cpuExecutionThread;
 	private Thread reporterThread;
 	private volatile boolean isStopped = false;
@@ -21,7 +21,7 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 
 	private FifoSchedulerImpl(Reporter r) {
 		this.reporter = r;
-		startingTime= System.currentTimeMillis();
+		this.startingTime= System.currentTimeMillis();
 	}
 
 	public static Scheduler createInstance(Reporter reporter) {
@@ -39,20 +39,19 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 		// For instance, create the CPUthread, the ReporterManager thread, the necessary
 		// queues lists/sets, etc.
 		
-		// Create a queue for processes
+		// Create queues for processes  and reporter
 		processQueue = new ArrayDeque<ProcessInformation>();
-
-		// Create and start the ReporterManager thread
-		ReporterManager reporterManager = new ReporterManager(reporter, processQueue);
-		Thread reporterThread = new Thread(reporterManager);
-		reporterThread.start();
+		reporterQueue = new ArrayDeque<ProcessInformation>();
 
 		// Create and start the CPU thread
-		CPUThread cpuThread = new CPUThread(processQueue);
+		CPUThread cpuThread = new CPUThread(processQueue, reporterQueue);
 		Thread cpuExecutionThread = new Thread(cpuThread);
 		cpuExecutionThread.start();
-        
 
+		// Create and start the ReporterManager thread
+		ReporterManager reporterManager = new ReporterManager(reporter, reporterQueue);
+		Thread reporterThread = new Thread(reporterManager);
+		reporterThread.start();
 
 		return this;
 	}

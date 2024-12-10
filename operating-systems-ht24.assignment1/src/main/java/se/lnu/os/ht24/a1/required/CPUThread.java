@@ -2,16 +2,15 @@ package se.lnu.os.ht24.a1.required;
 
 import java.util.ArrayDeque;
 
-import se.lnu.os.ht24.a1.provided.Scheduler;
 import se.lnu.os.ht24.a1.provided.data.ProcessInformation;
 
 public class CPUThread extends Thread {
     private final ArrayDeque<ProcessInformation> processQueue;
     private final ArrayDeque<ProcessInformation> reporterQueue;
 
-    public CPUThread(ArrayDeque<ProcessInformation> processQueue) {
+    public CPUThread(ArrayDeque<ProcessInformation> processQueue, ArrayDeque<ProcessInformation> reporterQueue) {
         this.processQueue = processQueue;
-        this.reporterQueue = new ArrayDeque<ProcessInformation>();
+        this.reporterQueue = reporterQueue;
     }
 
     @Override

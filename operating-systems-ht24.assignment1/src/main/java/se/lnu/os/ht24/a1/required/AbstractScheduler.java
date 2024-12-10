@@ -2,6 +2,7 @@ package se.lnu.os.ht24.a1.required;
 
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Queue;
 
 import se.lnu.os.ht24.a1.provided.Reporter;
 import se.lnu.os.ht24.a1.provided.Scheduler;
@@ -11,17 +12,18 @@ public abstract class AbstractScheduler implements Scheduler {
 
     protected Reporter reporter;
     protected long startingTime;
-    protected final ArrayDeque<ProcessInformation> processQueue;
-    protected final ArrayDeque<ProcessInformation> reporterQueue;
+    protected Queue<ProcessInformation> processQueue;
+    protected ArrayDeque<ProcessInformation> reporterQueue;
     protected Thread cpuExecutionThread;
     protected Thread reporterManager;
     protected volatile boolean isStopped = false;
 
     protected AbstractScheduler(Reporter reporter) {
         this.reporter = reporter;
-        this.startingTime = System.currentTimeMillis(); // Initialize the queues
-        this.processQueue = new ArrayDeque<>();
-        this.reporterQueue = new ArrayDeque<>();
+        this.startingTime = System.currentTimeMillis(); 
+		// Initialize the queues
+		this.processQueue = null; // Each approach for scheduler implements different Queue
+        this.reporterQueue = new ArrayDeque<ProcessInformation>();
     }
 
     @Override
@@ -32,8 +34,9 @@ public abstract class AbstractScheduler implements Scheduler {
     protected void initialize() {
        
 
-        // Create and start the CPU thread
+        // Create the CPU thread
 		cpuExecutionThread = new Thread(() -> {
+			// execute code if the thread is running or if there is process in the Queue to be released
             while (!isStopped || !processQueue.isEmpty()) {
                 ProcessInformation process;
                 synchronized (processQueue) {
@@ -58,13 +61,15 @@ public abstract class AbstractScheduler implements Scheduler {
                 
                 synchronized(reporterQueue) {
                     reporterQueue.add(process);
-                    reporterQueue.notifyAll(); // Notify the CPU thread that a new process is available
+                    reporterQueue.notify(); // Notify the CPU thread that a new process is available
                 }
                 }
             }
         });
 
+		// Create Thread for the Reporter Manager
 		reporterManager = new Thread(() -> {
+			// execute code if the thread is running or if there is process in the Queue to be released
             while (!isStopped || !reporterQueue.isEmpty()) {
                 ProcessInformation process;
                 synchronized (reporterQueue) {
@@ -80,11 +85,13 @@ public abstract class AbstractScheduler implements Scheduler {
                 if (process != null) {
 					synchronized(reporter) {
 						reporter.addProcessReport(process);
+						reporter.notify();
 					}
                 }
             }
         });
 
+		// start Threads
 		cpuExecutionThread.start();
         reporterManager.start();
     }
@@ -101,14 +108,15 @@ public abstract class AbstractScheduler implements Scheduler {
         addProcessToQueue(process);
     }
 
-    protected abstract void addProcessToQueue(ProcessInformation process);
+    protected abstract void addProcessToQueue(ProcessInformation process); // function to be implemented by each type of scheaduler
 
     @Override
     public void stop() {
         isStopped = true; // Flag to indicate stopping
 
+		// Wake up waiting threads
         synchronized (processQueue) {
-            processQueue.notifyAll(); // Wake up waiting threads
+            processQueue.notifyAll(); 
         }
 
         synchronized (reporterQueue) {

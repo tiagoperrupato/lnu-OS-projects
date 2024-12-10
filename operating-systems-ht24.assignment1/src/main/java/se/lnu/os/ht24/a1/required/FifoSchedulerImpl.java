@@ -1,5 +1,7 @@
 package se.lnu.os.ht24.a1.required;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 import se.lnu.os.ht24.a1.provided.Scheduler;
@@ -10,6 +12,11 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 
 	private final Reporter reporter;
 	private long startingTime;
+
+	private ArrayDeque<ProcessInformation> processQueue;
+	private Thread cpuExecutionThread;
+	private Thread reporterThread;
+	private volatile boolean isStopped = false;
 	
 
 	private FifoSchedulerImpl(Reporter r) {
@@ -23,7 +30,7 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 	}
 
 	@Override
-	public List<ProcessInformation> getProcessesReport() {
+	public synchronized List<ProcessInformation> getProcessesReport() {
 		return reporter.getProcessesReport();
 	}
 
@@ -31,6 +38,21 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 		// TODO You have to write this method to initialize your Scheduler:
 		// For instance, create the CPUthread, the ReporterManager thread, the necessary
 		// queues lists/sets, etc.
+		
+		// Create a queue for processes
+		processQueue = new ArrayDeque<ProcessInformation>();
+
+		// Create and start the ReporterManager thread
+		ReporterManager reporterManager = new ReporterManager(reporter, processQueue);
+		Thread reporterThread = new Thread(reporterManager);
+		reporterThread.start();
+
+		// Create and start the CPU thread
+		CPUThread cpuThread = new CPUThread(processQueue);
+		Thread cpuExecutionThread = new Thread(cpuThread);
+		cpuExecutionThread.start();
+        
+
 
 		return this;
 	}
@@ -43,6 +65,18 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 	@Override
 	public void newProcess(String processName, double cpuBurstDuration) {
 		// TODO You have to write this method.
+		
+		ProcessInformation process = ProcessInformation.createProcessInformation();
+		process.setProcessName(processName);
+		process.setCpuBurstDuration(cpuBurstDuration);
+		addProcessToQueue(process);
+	}
+
+	private void addProcessToQueue(ProcessInformation process) {
+		synchronized(processQueue) {
+			processQueue.add(process);
+        	notify(); // Notify the CPU thread that a new process is available
+		}
 	}
 
 	@Override
@@ -50,6 +84,23 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 		// TODO You have to write this method for a clean stop of your Scheduler
 		// For instance, finish all the remaining processes that need CPU, do not accept
 		// any other, do the joins for the created threads, etc.
+
+		synchronized (processQueue) {
+			isStopped = true; // Flag to indicate stopping
+			processQueue.notifyAll(); // Wake up any waiting threads
+		}
+
+		// Wait for threads to complete
+		try {
+			if (cpuExecutionThread != null) {
+				cpuExecutionThread.join();
+			}
+			if (reporterThread != null) {
+				reporterThread.join();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

@@ -25,5 +25,4 @@ replay_pid*
 
 .DS_Store
 
-# maven test files
 target/

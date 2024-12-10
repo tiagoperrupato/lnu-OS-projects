@@ -7,10 +7,12 @@ import se.lnu.os.ht24.a1.provided.data.ProcessInformation;
 public class CPUThread extends Thread {
     private final ArrayDeque<ProcessInformation> processQueue;
     private final ArrayDeque<ProcessInformation> reporterQueue;
+    private long startingTime;
 
-    public CPUThread(ArrayDeque<ProcessInformation> processQueue, ArrayDeque<ProcessInformation> reporterQueue) {
+    public CPUThread(ArrayDeque<ProcessInformation> processQueue, ArrayDeque<ProcessInformation> reporterQueue, long startingTime) {
         this.processQueue = processQueue;
         this.reporterQueue = reporterQueue;
+        this.startingTime = startingTime;
     }
 
     @Override
@@ -22,24 +24,21 @@ public class CPUThread extends Thread {
                     try {
                         processQueue.wait(); // Wait for new processes
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        Thread.currentThread().interrupt();
                     }
                 }
                 process = processQueue.poll();
             }
 
             if (process != null) {
-                double startTime = System.currentTimeMillis();
-                process.setCpuScheduledTime(startTime);
+                process.setCpuScheduledTime((System.currentTimeMillis() - startingTime) / 1000.0);
 
                 try {
                     Thread.sleep((long) (process.getCpuBurstDuration() * 1000));
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
                 }
-
-                double endTime = System.currentTimeMillis();
-                process.setEndTime(endTime);
+                process.setEndTime((System.currentTimeMillis() - startingTime) / 1000.0);
                 
                 synchronized(reporterQueue) {
                     reporterQueue.add(process);

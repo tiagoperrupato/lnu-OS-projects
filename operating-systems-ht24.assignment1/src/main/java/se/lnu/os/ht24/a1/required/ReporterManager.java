@@ -24,7 +24,7 @@ public class ReporterManager extends Thread {
                     try {
                         reporterQueue.wait(); // Wait for new reports
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        Thread.currentThread().interrupt();
                     }
                 }
                 process = reporterQueue.poll();

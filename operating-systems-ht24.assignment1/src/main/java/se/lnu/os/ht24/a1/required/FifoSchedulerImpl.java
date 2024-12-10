@@ -44,7 +44,7 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 		reporterQueue = new ArrayDeque<ProcessInformation>();
 
 		// Create and start the CPU thread
-		CPUThread cpuThread = new CPUThread(processQueue, reporterQueue);
+		CPUThread cpuThread = new CPUThread(processQueue, reporterQueue, startingTime);
 		Thread cpuExecutionThread = new Thread(cpuThread);
 		cpuExecutionThread.start();
 
@@ -68,7 +68,7 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 		ProcessInformation process = ProcessInformation.createProcessInformation();
 		process.setProcessName(processName);
 		process.setCpuBurstDuration(cpuBurstDuration);
-		process.setArrivalTime(System.currentTimeMillis());
+		process.setArrivalTime((System.currentTimeMillis() - startingTime) / 1000.0);
 		addProcessToQueue(process);
 	}
 
@@ -84,11 +84,14 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 		// TODO You have to write this method for a clean stop of your Scheduler
 		// For instance, finish all the remaining processes that need CPU, do not accept
 		// any other, do the joins for the created threads, etc.
-
+		isStopped = true; // Flag to indicate stopping
 		synchronized (processQueue) {
-			isStopped = true; // Flag to indicate stopping
 			processQueue.notifyAll(); // Wake up any waiting threads
 		}
+
+		synchronized (reporterQueue) {
+            reporterQueue.notifyAll();
+        }
 
 		// Wait for threads to complete
 		try {
@@ -99,7 +102,7 @@ public class FifoSchedulerImpl extends AbstractScheduler {
 				reporterThread.join();
 			}
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			Thread.currentThread().interrupt();
 		}
 	}
 

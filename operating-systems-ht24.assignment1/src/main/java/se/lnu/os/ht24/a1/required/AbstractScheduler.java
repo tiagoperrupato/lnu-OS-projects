@@ -1,5 +1,6 @@
 package se.lnu.os.ht24.a1.required;
 
+import java.util.ArrayDeque;
 import java.util.List;
 
 import se.lnu.os.ht24.a1.provided.Reporter;
@@ -26,6 +27,8 @@ public abstract class AbstractScheduler implements Scheduler {
 
 	protected Reporter reporter;
 	protected long startingTime;
+
+	
 
 	@Override
 	public List<ProcessInformation> getProcessesReport() {

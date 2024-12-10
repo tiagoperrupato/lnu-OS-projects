@@ -15,11 +15,13 @@ public class FifoSchedulerImpl extends AbstractScheduler {
         return new FifoSchedulerImpl(reporter);
     }
 
+
+
     @Override
     protected void addProcessToQueue(ProcessInformation process) {
         synchronized (processQueue) {
-            processQueue.addLast(process); // Add process to the end of the queue (FIFO)
-            processQueue.notify();         // Notify the CPU thread
+            processQueue.add(process); // Add process to the end of the queue (FIFO)
+            processQueue.notifyAll();         // Notify the CPU thread
         }
     }
 }

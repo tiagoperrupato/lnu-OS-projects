@@ -8,17 +8,20 @@ import se.lnu.os.ht24.a1.provided.Scheduler;
 import se.lnu.os.ht24.a1.provided.data.ProcessInformation;
 
 public abstract class AbstractScheduler implements Scheduler {
+
     protected Reporter reporter;
     protected long startingTime;
-    protected ArrayDeque<ProcessInformation> processQueue;
-    protected ArrayDeque<ProcessInformation> reporterQueue;
+    protected final ArrayDeque<ProcessInformation> processQueue;
+    protected final ArrayDeque<ProcessInformation> reporterQueue;
     protected Thread cpuExecutionThread;
-    protected Thread reporterThread;
+    protected Thread reporterManager;
     protected volatile boolean isStopped = false;
 
     protected AbstractScheduler(Reporter reporter) {
         this.reporter = reporter;
-        this.startingTime = System.currentTimeMillis();
+        this.startingTime = System.currentTimeMillis(); // Initialize the queues
+        this.processQueue = new ArrayDeque<>();
+        this.reporterQueue = new ArrayDeque<>();
     }
 
     @Override
@@ -27,19 +30,63 @@ public abstract class AbstractScheduler implements Scheduler {
     }
 
     protected void initialize() {
-        // Initialize the queues
-        processQueue = new ArrayDeque<>();
-        reporterQueue = new ArrayDeque<>();
+       
 
         // Create and start the CPU thread
-        CPUThread cpuThread = new CPUThread(processQueue, reporterQueue, startingTime);
-        cpuExecutionThread = new Thread(cpuThread);
-        cpuExecutionThread.start();
+		cpuExecutionThread = new Thread(() -> {
+            while (!isStopped || !processQueue.isEmpty()) {
+                ProcessInformation process;
+                synchronized (processQueue) {
+                    while (processQueue.isEmpty() && !isStopped) {
+                        try {
+                            processQueue.wait();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                    process = processQueue.poll();
+                }
+                if (process != null) {
+                    process.setCpuScheduledTime((System.currentTimeMillis() - startingTime) / 1000.0);
 
-        // Create and start the ReporterManager thread
-        ReporterManager reporterManager = new ReporterManager(reporter, reporterQueue);
-        reporterThread = new Thread(reporterManager);
-        reporterThread.start();
+                try {
+                    Thread.sleep((long) (process.getCpuBurstDuration() * 1000));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                process.setEndTime((System.currentTimeMillis() - startingTime) / 1000.0);
+                
+                synchronized(reporterQueue) {
+                    reporterQueue.add(process);
+                    reporterQueue.notifyAll(); // Notify the CPU thread that a new process is available
+                }
+                }
+            }
+        });
+
+		reporterManager = new Thread(() -> {
+            while (!isStopped || !reporterQueue.isEmpty()) {
+                ProcessInformation process;
+                synchronized (reporterQueue) {
+                    while (reporterQueue.isEmpty() && !isStopped) {
+                        try {
+                            reporterQueue.wait();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                    process = reporterQueue.poll();
+                }
+                if (process != null) {
+					synchronized(reporter) {
+						reporter.addProcessReport(process);
+					}
+                }
+            }
+        });
+
+		cpuExecutionThread.start();
+        reporterManager.start();
     }
 
     @Override
@@ -73,8 +120,8 @@ public abstract class AbstractScheduler implements Scheduler {
             if (cpuExecutionThread != null) {
                 cpuExecutionThread.join();
             }
-            if (reporterThread != null) {
-                reporterThread.join();
+            if (reporterManager != null) {
+                reporterManager.join();
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

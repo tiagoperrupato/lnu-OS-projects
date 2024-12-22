@@ -2,7 +2,6 @@ package se.lnu.os.ht24.a2.required;
 
 import se.lnu.os.ht24.a2.provided.data.ProcessInterval;
 import se.lnu.os.ht24.a2.provided.data.StrategyType;
-import se.lnu.os.ht24.a2.provided.exceptions.InstructionException;
 import se.lnu.os.ht24.a2.provided.interfaces.Memory;
 
 import java.util.Arrays;
@@ -17,11 +16,6 @@ public class MemoryImpl implements Memory {
     private final int size; // Total size of the memory
 
     public MemoryImpl(int size){
-        /* TODO
-            Structure your memory how you like and initialize it here. This is the only constructor allowed and
-            should create an empty memory of the given size. Feel free to add any variable or method you see
-            fit for your implementation in this class
-         */
         this.size = size;
         this.memory = new int[size];
         Arrays.fill(memory, -1); // Initialize memory to free (-1 indicates free cell)
@@ -29,7 +23,6 @@ public class MemoryImpl implements Memory {
 
     @Override
     public boolean containsProcess(int processId) {
-        // TODO Replace this return statement with the method that checks if processId is allocated in the memory
         // Check if the processId exists in the memory array
         for (int cell : memory) {
             if (cell == processId) {
@@ -41,10 +34,6 @@ public class MemoryImpl implements Memory {
 
     @Override
     public List<Integer> processes() {
-        /* TODO
-            Replace this return statement with the list of processIds of the currently allocated processes
-            in the memory. If the memory is empty, return an empty List.
-         */
         // Extract unique process IDs in memory (excluding -1 for free cells)
         return Arrays.stream(memory)
                 .filter(id -> id != -1)
@@ -55,10 +44,6 @@ public class MemoryImpl implements Memory {
 
     @Override
     public int processSize(int processId) {
-        /* TODO
-            Replace this return statement with the method that returns the size of the process with processId
-            in the memory, 0 if it is not allocated.
-         */
         // Count the number of cells occupied by the given processId
         int count = 0;
         for (int cell : memory) {
@@ -71,10 +56,6 @@ public class MemoryImpl implements Memory {
 
     @Override
     public ProcessInterval getProcessInterval(int processId) {
-        /* TODO
-            Replace this return statement with the method that returns a ProcessInterval instance containing the
-            lower and upper address in memory of the process with processId. Return null if the process is not allocated
-         */
         int start = -1, end = -1;
         for (int i = 0; i < size; i++) {
             if (memory[i] == processId) {
@@ -87,12 +68,6 @@ public class MemoryImpl implements Memory {
 
     @Override
     public Set<Integer> neighboringProcesses(int processId) {
-        /* TODO
-            Replace this return statement with the method that returns the Set containing the ids of all the
-            contiguous processes to the one that has processId (min. 0 if the process is between two free portions of
-            memory and max. 2 if the process is surrounded both left and right by other processes). For no neighboring
-            processes, return an empty Set.
-         */
         Set<Integer> neighbors = new HashSet<>();
         for (int i = 0; i < size; i++) {
             if (memory[i] == processId) {
@@ -122,15 +97,14 @@ public class MemoryImpl implements Memory {
             }
         }
 
+        if (largestFreeBlock < count) {
+            largestFreeBlock = count;
+        }
         return largestFreeBlock;
     }
 
     @Override
     public double fragmentation() {
-        /* TODO
-            Replace this return statement with the method that returns the memory fragmentation value. There is
-            no need to round decimals, as the Tests will do it before checking.
-         */
         int largestFreeBlock = 0;
         int freeBlockCount = 0;
 
@@ -146,13 +120,6 @@ public class MemoryImpl implements Memory {
 
     @Override
     public Set<ProcessInterval> freeSlots() {
-        /* TODO
-            Replace this return statement with the method that returns the set of ProcessInterval instances
-            corresponding to the free slots of the memory. Return exactly one ProcessInterval per slot, make sure
-            that you don't split any slot in two different intervals (e.g. if slot 0-199 is free, adding 0-99
-            and 100-199 will be considered an error, while adding 0-199 is the only correct solution). If the
-            memory is full, return an empty Set.
-         */
         Set<ProcessInterval> freeIntervals = new HashSet<>();
         int start = -1;
 
@@ -297,21 +264,6 @@ public class MemoryImpl implements Memory {
     }
 
     public void compact() {
-        /* 
-        int freeCount = 0;
-        for (int i = 0; i < size; i++) {
-            if (memory[i] == -1) {
-                freeCount++;
-            } else {
-                if (freeCount > 0) {
-                    // Move the process to the left by freeCount cells
-                    memory[i - freeCount] = memory[i];
-                    memory[i] = -1; // Free the cell
-                }
-            }hav
-        } */
-
-        
         int writeIndex = 0; // Pointer for the next position to write a non-empty cell
 
         // Traverse the memory array

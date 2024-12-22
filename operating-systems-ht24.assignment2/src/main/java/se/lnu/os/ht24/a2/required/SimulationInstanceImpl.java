@@ -28,13 +28,6 @@ public class SimulationInstanceImpl implements SimulationInstance {
 
     @Override
     public void runAll() {
-        /* TODO
-             Implement the method to run all the remaining part of the simulation at once. If there are no more
-             instructions, just do nothing. You should remove instructions from the queue when executing them.
-             IMPORTANT: remember that, if you are adopting BEST_FIT or WORST_FIT and you have more than one eligible
-             hole for an AllocationInstruction, you should choose the one with the lowest address among them.
-             For FIRST_FIT, always start from the address 0 when searching for a valid hole.
-         */
         while (!remainingInstructions.isEmpty()) {
             executeNextInstruction();
         }
@@ -42,10 +35,6 @@ public class SimulationInstanceImpl implements SimulationInstance {
 
     @Override
     public void run(int steps) {
-        /* TODO
-            Implement the method to run a stepped simulation (one step = one instruction). If steps > actual available
-            instructions, just run all the simulation.
-         */
         for (int i = 0; i < steps && !remainingInstructions.isEmpty(); i++) {
             executeNextInstruction();
         }
@@ -80,9 +69,7 @@ public class SimulationInstanceImpl implements SimulationInstance {
                 "List of Occurred Exceptions: " + instructionExceptions;
     }
 
-    /**
-     * Helper method to execute the next instruction in the queue.
-     */
+    // Helper method to execute the next instruction in the queue.
     private void executeNextInstruction() {
         Instruction instruction = remainingInstructions.poll();
         if (instruction == null) return;
@@ -100,9 +87,7 @@ public class SimulationInstanceImpl implements SimulationInstance {
         }
     }
 
-    /**
-     * Execute an allocation instruction.
-     */
+    // Execute an allocation instruction.
     private void executeAllocation(AllocationInstruction alloc) {
         boolean success;
 
@@ -113,9 +98,7 @@ public class SimulationInstanceImpl implements SimulationInstance {
         }
     }
 
-    /**
-     * Execute a deallocation instruction.
-     */
+    // Execute a deallocation instruction.
     private void executeDeallocation(DeallocationInstruction dealloc) {
         boolean success;
 
@@ -126,9 +109,7 @@ public class SimulationInstanceImpl implements SimulationInstance {
         }
     }
 
-    /**
-     * Execute a compaction instruction.
-     */
+    // Execute a compaction instruction.
     private void executeCompaction() {
         memory.compact();
     }

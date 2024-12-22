@@ -103,15 +103,27 @@ public class SimulationInstanceImpl implements SimulationInstance {
     /**
      * Execute an allocation instruction.
      */
-    private void executeAllocation(AllocationInstruction alloc) throws InstructionException {
-        memory.allocate(alloc.getProcessId(), alloc.getSize(), strategyType);
+    private void executeAllocation(AllocationInstruction alloc) {
+        boolean success;
+
+        success = memory.allocate(alloc.getProcessId(), alloc.getDimension(), strategyType);
+        
+        if (!success) {
+            throw new InstructionException(alloc, memory.largestFreeBlock());
+        }
     }
 
     /**
      * Execute a deallocation instruction.
      */
-    private void executeDeallocation(DeallocationInstruction dealloc) throws InstructionException {
-        memory.deallocate(dealloc.getProcessId());
+    private void executeDeallocation(DeallocationInstruction dealloc) {
+        boolean success;
+
+        success = memory.deallocate(dealloc.getProcessId());
+
+        if (!success) {
+            throw new InstructionException(dealloc, memory.largestFreeBlock());
+        }
     }
 
     /**

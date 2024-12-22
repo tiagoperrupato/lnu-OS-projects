@@ -175,24 +175,27 @@ public class MemoryImpl implements Memory {
         return freeIntervals;
     }
 
-    public void allocate(int processID, int size, StrategyType strategyType) {
+    public boolean allocate(int processID, int size, StrategyType strategyType) {
+        boolean success = true;
         // Check if the process ID already exists in memory
-        if (containsProcess(processId)) {
+        if (containsProcess(processID)) {
             // Process ID already allocated
-            throw new InstructionException("Allocation Failed: Process already allocated", largestFreeBlock());
+            success = false;
         }
 
         // Find the starting address of a suitable block
         int startAddress = findBlock(size, strategyType);
         if (startAddress == -1) {
             // No suitable block found
-            throw new InstructionException("Allocation Failed: Process could not be allocated", largestFreeBlock());
+            success = false;
         }
 
         // Allocate the process in the found block
         for (int i = startAddress; i < startAddress + size; i++) {
-            memory[i] = processId;
+            memory[i] = processID;
         }
+
+        return success;
     }
 
     private int findBlock(int size, StrategyType strategyType) {
@@ -202,7 +205,7 @@ public class MemoryImpl implements Memory {
             case WORST_FIT -> findBlockWF(size);
         };
 
-        return startAdress;
+        return startAddress;
     }
 
     private int findBlockFF(int size) {
@@ -275,11 +278,12 @@ public class MemoryImpl implements Memory {
         return worstStart;
     }
 
-    public void deallocate(int processId) {
+    public boolean deallocate(int processId) {
+        boolean success = true;
         // Check if the process ID exists in memory
         if (!containsProcess(processId)) {
             // Process ID not found
-            throw new InstructionException("Deallocation Failed: Process not found", largestFreeBlock());
+            success = false;
         }
 
         // Deallocate the process
@@ -288,6 +292,8 @@ public class MemoryImpl implements Memory {
                 memory[i] = -1; // Free the cell
             }
         }
+
+        return success;
     }
 
     public void compact() {
@@ -302,7 +308,7 @@ public class MemoryImpl implements Memory {
                     memory[i - freeCount] = memory[i];
                     memory[i] = -1; // Free the cell
                 }
-            }
+            }hav
         } */
 
         

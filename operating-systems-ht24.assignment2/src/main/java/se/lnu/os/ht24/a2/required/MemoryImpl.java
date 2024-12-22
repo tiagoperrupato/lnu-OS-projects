@@ -275,6 +275,53 @@ public class MemoryImpl implements Memory {
         return worstStart;
     }
 
+    public void deallocate(int processId) {
+        // Check if the process ID exists in memory
+        if (!containsProcess(processId)) {
+            // Process ID not found
+            throw new InstructionException("Deallocation Failed: Process not found", largestFreeBlock());
+        }
+
+        // Deallocate the process
+        for (int i = 0; i < size; i++) {
+            if (memory[i] == processId) {
+                memory[i] = -1; // Free the cell
+            }
+        }
+    }
+
+    public void compact() {
+        /* 
+        int freeCount = 0;
+        for (int i = 0; i < size; i++) {
+            if (memory[i] == -1) {
+                freeCount++;
+            } else {
+                if (freeCount > 0) {
+                    // Move the process to the left by freeCount cells
+                    memory[i - freeCount] = memory[i];
+                    memory[i] = -1; // Free the cell
+                }
+            }
+        } */
+
+        
+        int writeIndex = 0; // Pointer for the next position to write a non-empty cell
+
+        // Traverse the memory array
+        for (int readIndex = 0; readIndex < size; readIndex++) {
+            if (memory[readIndex] != -1) { // If the cell is occupied
+                memory[writeIndex] = memory[readIndex]; // Move it to the left
+                writeIndex++;
+            }
+        }
+
+        // Fill the remaining positions with -1 (free space)
+        for (int i = writeIndex; i < size; i++) {
+            memory[i] = -1;
+        }
+    }
+
     @Override
     public String toString() {
         StringBuilder retStr = new StringBuilder("Memory Size = " + size + "\n");

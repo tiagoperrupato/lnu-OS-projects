@@ -111,11 +111,7 @@ public class SimulationInstanceImpl implements SimulationInstance {
      * Execute a deallocation instruction.
      */
     private void executeDeallocation(DeallocationInstruction dealloc) throws InstructionException {
-        boolean success = memory.deallocate(dealloc.getProcessId());
-
-        if (!success) {
-            throw new InstructionException("Deallocation failed", memory.largestFreeBlock());
-        }
+        memory.deallocate(dealloc.getProcessId());
     }
 
     /**
